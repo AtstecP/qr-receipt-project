@@ -1,4 +1,3 @@
-# backend/app/api/v1/endpoints/auth.py
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -10,11 +9,12 @@ from typing import Optional
 
 from app.db.session import get_db
 from app.models.user import User
+from app.schemas.user import UserCreate, UserInDB, Token, TokenData
 from app.core.config import settings
 
 router = APIRouter(tags=["auth"])
 
-# Конфигурация
+# Configuration
 SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
@@ -22,24 +22,9 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/token")
 
-# Модели Pydantic
-class Token(BaseModel):
-    access_token: str
-    token_type: str
 
-class TokenData(BaseModel):
-    email: Optional[str] = None
 
-class UserCreate(BaseModel):
-    email: str
-    password: str
-    full_name: Optional[str] = None
 
-class UserInDB(BaseModel):
-    email: str
-    hashed_password: str
-
-# Утилиты
 def verify_password(plain_password: str, hashed_password: str):
     return pwd_context.verify(plain_password, hashed_password)
 
@@ -67,7 +52,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-# Эндпоинты
+
 @router.post("/token", response_model=Token)
 async def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
@@ -91,7 +76,7 @@ async def register_user(
     user_data: UserCreate,
     db: Session = Depends(get_db)
 ):
-    # Проверяем, не зарегистрирован ли уже пользователь
+    # if alredy registered
     db_user = get_user(db, user_data.email)
     if db_user:
         raise HTTPException(
@@ -99,7 +84,7 @@ async def register_user(
             detail="Email already registered"
         )
     
-    # Создаем нового пользователя
+    # createing new user
     hashed_password = get_password_hash(user_data.password)
     user = User(
         email=user_data.email,
@@ -111,7 +96,7 @@ async def register_user(
     db.commit()
     return {"message": "User created successfully"}
 
-# Зависимость для защиты эндпоинтов
+# Dependnenciees for endpoints
 async def get_current_user(
     token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_db)

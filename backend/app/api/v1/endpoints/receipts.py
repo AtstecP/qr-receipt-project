@@ -1,21 +1,25 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import FileResponse
 from app.services import pdf_generator, qr_code
 from app.models.receipt import Receipt
 from app.schemas.receipt import ReceiptCreate, ReceiptResponse
 from app.db.session import get_db
+from app.services.qr_code import generate_qr
 
 router = APIRouter()
 
+# @router.get("/qr")
+# async def get_qr():
+#     file_name = generate_qr('http://192.168.0.144:8000/api/v1/receipts/pdf')
+#     return FileResponse(f'{file_name}')
+
+# @router.get("/pdf")
+# async def get_qr():
+#     return FileResponse('app/services/your_pdf_file_here.pdf')
+
 @router.post("/", response_model=ReceiptResponse)
 async def create_receipt(receipt_data: ReceiptCreate, db=Depends(get_db)):
-    # Business logic and validation
-    subtotal = sum(item.price * item.quantity for item in receipt_data.items)
-    hst = subtotal * 0.13
-    total = subtotal + hst
-    
-    # Generate QR code
-    qr_url = qr_code.generate_qr(f"receipt_id:{receipt_data.id}")
-    
+
     # Generate PDF
     business_info = get_business_info(receipt_data.business_id)  # Implement this
     pdf_url = pdf_generator.generate_receipt_pdf(receipt_data.dict(), business_info)
@@ -23,16 +27,9 @@ async def create_receipt(receipt_data: ReceiptCreate, db=Depends(get_db)):
     # Save to database
     db_receipt = Receipt(
         id=str(uuid.uuid4()),
-        business_id=receipt_data.business_id,
+        business_id=receipt_data.user_id,
         transaction_date=receipt_data.transaction_date,
-        subtotal=subtotal,
-        hst=hst,
-        total=total,
-        items_json=json.dumps([item.dict() for item in receipt_data.items]),
-        customer_email=receipt_data.customer_email,
-        customer_phone=receipt_data.customer_phone,
-        qr_code_url=qr_url,
-        pdf_url=pdf_url
+        total=receipt_data.total,
     )
     
     db.add(db_receipt)

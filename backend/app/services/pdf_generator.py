@@ -1,30 +1,53 @@
-import pdfkit
+from pdfkit import from_string
 from jinja2 import Environment, FileSystemLoader
-from app.core.config import settings
 
-def generate_receipt_pdf(receipt_data: dict, business_info: dict) -> str:
-    # Calculate totals
-    subtotal = sum(item['price'] * item['quantity'] for item in receipt_data['items'])
-    hst = subtotal * 0.13
-    total = subtotal + hst
-    
-    # Render HTML template
-    env = Environment(loader=FileSystemLoader('app/templates'))
-    template = env.get_template("receipt.html")
-    html = template.render(
-        receipt=receipt_data,
-        business=business_info,
-        subtotal=subtotal,
-        hst=hst,
-        total=total
-    )
-    
-    # Generate PDF
-    options = {
-        'encoding': 'UTF-8',
-        'quiet': ''
+
+
+data = {
+  "receipt_id": 20250619,
+  "user_id": 98327,
+  "timestamp": "2025-06-19T14:30:45Z",
+  "company_name": "QuickFix Tech Solutions",
+  "total": 154.75,
+  "items_json": [
+    {
+      "name": "USB-C Charger",
+      "quantity": 1,
+      "price": 34.99
+    },
+    {
+      "name": "Wireless Mouse",
+      "quantity": 2,
+      "price": 29.88
+    },
+    {
+      "name": "Laptop Stand",
+      "quantity": 1,
+      "price": 59.00
     }
-    pdf_path = f"receipts/{receipt_data['id']}.pdf"
-    pdfkit.from_string(html, pdf_path, options=options)
-    
-    return pdf_path
+  ]
+}
+
+
+def generate_receipt_pdf():
+
+
+    env = Environment(loader=FileSystemLoader('jinja_templates'))
+    template = env.get_template("receipt.html")
+    html = template.render(**data)
+
+
+    content = from_string(html)
+    try:
+        with open('your_pdf_file_here.pdf', 'wb+') as file:
+            file.write(content)
+
+    except Exception as error:
+        raise error(f'Error saving file to disc. Error: {error}')
+
+    return content
+
+if __name__=="__main__":
+    print(generate_receipt_pdf())
+
+
