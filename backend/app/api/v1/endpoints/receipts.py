@@ -19,12 +19,7 @@ router = APIRouter()
 
 @router.post("/", response_model=ReceiptResponse)
 async def create_receipt(receipt_data: ReceiptCreate, db=Depends(get_db)):
-
-    # Generate PDF
-    business_info = get_business_info(receipt_data.business_id)  # Implement this
-    pdf_url = pdf_generator.generate_receipt_pdf(receipt_data.dict(), business_info)
     
-    # Save to database
     db_receipt = Receipt(
         id=str(uuid.uuid4()),
         business_id=receipt_data.user_id,
@@ -34,9 +29,6 @@ async def create_receipt(receipt_data: ReceiptCreate, db=Depends(get_db)):
     
     db.add(db_receipt)
     db.commit()
-    
-    # Send notification
-    # if receipt_data.customer_email or receipt_data.customer_phone:
-    #     send_notification(db_receipt)  # Implement this
+
     
     return db_receipt
