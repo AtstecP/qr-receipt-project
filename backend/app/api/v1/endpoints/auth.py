@@ -4,8 +4,9 @@ from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from pydantic import BaseModel
 from typing import Optional
+from fastapi.responses import JSONResponse
 
-from app.services.utils import get_password_hash
+from app.services.utils import get_password_hash, authenticate_user, create_access_token
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.user import UserCreate
@@ -32,18 +33,17 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
 
 
 
-# @router.post("/login")
-# async def login_for_access_token(user: UserCreate, db: Session = Depends(get_db)):
-#   if user.email and user.password:
-#     user = authenticate_user(db, user.email, user.password)
-#     if user:
-#       token = create_access_token(data={"sub": user.email})
-#       refresh_token = create_refresh_token(data={"sub": user.email,
-#                         "id": user.id})
-#       response = JSONResponse({"token" : token}, status_code=200)
-#       response.set_cookie(key="refresh-Token", value=refresh_token)
-#       return response
-#   return JSONResponse({"msg": "Invalid Credentials"}, status_code=403)
+@router.post("/login")
+async def login_for_access_token(user: UserCreate, db: Session = Depends(get_db)):
+  if user.email and user.password:
+    user = authenticate_user(db, user.email, user.password)
+    if user:
+      token = create_access_token(data={"sub": user.email})
+      #refresh_token = create_refresh_token(data={"sub": user.email,"id": user.id})
+      response = JSONResponse({"token" : token}, status_code=200)
+      #response.set_cookie(key="refresh-Token", value=token)
+      return response
+  return JSONResponse({"msg": "Invalid Credentials"}, status_code=403)
 
 
 
