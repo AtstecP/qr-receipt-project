@@ -24,6 +24,7 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
         )
     hashed_password = get_password_hash(user.password)
     user = User(
+        company_name = user.company_name
         email=user.email,
         hashed_password=hashed_password
     )

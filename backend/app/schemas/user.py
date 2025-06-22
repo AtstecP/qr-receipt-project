@@ -5,6 +5,7 @@ class Token(BaseModel):
     token_type: str
 
 class UserCreate(BaseModel):
+    company_name: str
     email: str
     password: str
 
