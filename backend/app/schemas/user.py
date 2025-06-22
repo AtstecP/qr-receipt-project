@@ -9,6 +9,6 @@ class UserCreate(BaseModel):
     password: str
 
 
-class UserInDB(BaseModel):
+class User(BaseModel):
     email: str
     hashed_password: str
