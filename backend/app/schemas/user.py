@@ -9,7 +9,6 @@ class UserCreate(BaseModel):
     email: str
     password: str
 
-
-class User(BaseModel):
+class UserLogin(BaseModel):
     email: str
-    hashed_password: str
+    password: str

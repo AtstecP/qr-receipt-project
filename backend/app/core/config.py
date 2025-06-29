@@ -5,7 +5,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str
     SECRET_KEY: str = "your-secret-key"
     HST_NUMBER: str = "123456789RT0001"  
-    JWT_EXPIRE_MINUTES: int = 1440
+    REFRESH_TTL_MIN: int = 1440
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     ALGORITHM: str = "HS256"
     

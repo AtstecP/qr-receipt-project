@@ -21,6 +21,13 @@ def get_password_hash(password: str):
 def get_user(db: Session, email: str):
     return db.query(User).filter(User.email == email).first()
 
+def create_refresh_token(data: dict) -> str:
+    to_encode = data.copy()
+    to_encode.update({
+        "exp": datetime.utcnow() + timedelta(minutes=settings.REFRESH_TTL_MIN),
+        "type": "refresh"
+    })
+    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
 def create_access_token(data: dict):
     to_encode = data.copy()
