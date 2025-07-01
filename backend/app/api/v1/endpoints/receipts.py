@@ -8,14 +8,14 @@ from app.services.qr_code import generate_qr
 
 router = APIRouter()
 
-# @router.get("/qr")
-# async def get_qr():
-#     file_name = generate_qr('http://192.168.0.144:8000/api/v1/receipts/pdf')
-#     return FileResponse(f'{file_name}')
+@router.get("/qr")
+async def get_qr():
+    file_name = generate_qr('http://192.168.0.144:8000/api/v1/receipts/pdf')
+    return FileResponse(f'{file_name}')
 
-# @router.get("/pdf")
-# async def get_qr():
-#     return FileResponse('app/services/your_pdf_file_here.pdf')
+@router.get("/pdf")
+async def get_qr():
+    return FileResponse('app/services/your_pdf_file_here.pdf')
 
 @router.post("/", response_model=ReceiptResponse)
 async def create_receipt(receipt_data: ReceiptCreate, db=Depends(get_db)):

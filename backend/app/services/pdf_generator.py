@@ -31,7 +31,7 @@ data = {
 
 def generate_receipt_pdf():
     env = Environment(loader=FileSystemLoader('jinja_templates'))
-    template = env.get_template("receipt.html")
+    template = env.get_template('receipt.html') 
     html = template.render(**data)
 
 
