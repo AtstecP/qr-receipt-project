@@ -4,9 +4,8 @@ from pydantic import BaseModel
 
 
 class ReceiptCreate(BaseModel):
-    user_id: str
+    total : float
     transaction_date: datetime = datetime.now()
 
 class ReceiptResponse(ReceiptCreate):
-    id: str
-    total: float
+    pdf_endpoint: str

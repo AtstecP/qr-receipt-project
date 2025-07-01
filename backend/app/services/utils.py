@@ -3,6 +3,8 @@ from jose import jwt
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
+from fastapi import Cookie
+from fastapi import HTTPException, status
 
 
 from app.db.session import get_db
@@ -21,6 +23,10 @@ def get_password_hash(password: str):
 def get_user(db: Session, email: str):
     return db.query(User).filter(User.email == email).first()
 
+def get_user_id(db: Session, email: str) -> int | None:
+    user = db.query(User.id).filter(User.email == email).first()
+    return user.id if user else None
+
 def create_refresh_token(data: dict) -> str:
     to_encode = data.copy()
     to_encode.update({
@@ -36,16 +42,28 @@ def create_access_token(data: dict):
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
-def verify_token(token: str):
+
+def verify_token(token: str = Cookie(None)):
+    if token is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token missing"
+        )
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         username: str = payload.get("sub")
         if username is None:
-            return None
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token payload invalid"
+            )
         return username
     except jwt.PyJWTError:
-        return None
-
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token"
+        )
+    
 def authenticate_user(db: Session, email: str, password: str):
     user = get_user(db, email)
     if not user:
