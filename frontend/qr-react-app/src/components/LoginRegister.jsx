@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from 'axios';
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 const LoginRegister = ({ onLoginSuccess }) => {
@@ -23,39 +23,48 @@ const LoginRegister = ({ onLoginSuccess }) => {
         // Login API call
         const response = await axios.post(`${API_BASE_URL}/api/v1/login`, {
           email,
-          password
+          password,
         });
-        
+
         // Store JWT token in localStorage
-        localStorage.setItem('jwtToken', response.data.access_token);
-        
+        localStorage.setItem("jwtToken", response.data.access_token);
+        localStorage.setItem("userEmail", email);
         // Set default Authorization header for future requests
-        axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.access_token}`;
-        
+        axios.defaults.headers.common[
+          "Authorization"
+        ] = `Bearer ${response.data.access_token}`;
         console.log("Login successful:", response.data);
-        onLoginSuccess(response.data.user); // Pass user data to parent
+        onLoginSuccess(email); // Pass user data to parent
+        navigate("/");
       } else {
         // Register API call
         await axios.post(`${API_BASE_URL}/api/v1/register`, {
           company_name: companyName,
           email,
-          password
+          password,
         });
-        
-        // After successful registration, switch to login view
-        setIsLogin(true);
-        setError(""); // Clear any previous errors
-        // Show success message
-        setError("Registration successful! Please login.");
-        // Clear form fields
-        setEmail("");
-        setPassword("");
-        setCompanyName("");
+
+        const loginResponse = await axios.post(`${API_BASE_URL}/api/v1/login`, {
+          email,
+          password,
+        });
+        localStorage.setItem("jwtToken", loginResponse.data.access_token);
+        localStorage.setItem("userEmail", email);
+        // Set default Authorization header for future requests
+        axios.defaults.headers.common[
+          "Authorization"
+        ] = `Bearer ${loginResponse.data.access_token}`;
+        onLoginSuccess(email); // Pass user data to parent
+        navigate("/");
       }
     } catch (err) {
       let errorMessage = "Something went wrong";
       if (err.response) {
-        errorMessage = err.response.data.detail || err.response.statusText;
+        if (err.response.status === 403) {
+          errorMessage = "Invalid email or password";
+        } else {
+          errorMessage = err.response.data.detail || err.response.statusText;
+        }
       } else if (err.request) {
         errorMessage = "No response from server";
       }
@@ -100,7 +109,10 @@ const LoginRegister = ({ onLoginSuccess }) => {
         <form onSubmit={handleSubmit} className="space-y-5">
           {!isLogin && (
             <div className="space-y-2 animate-fadeIn">
-              <label htmlFor="company" className="block text-sm font-medium text-white/80">
+              <label
+                htmlFor="company"
+                className="block text-sm font-medium text-white/80"
+              >
                 Company Name
               </label>
               <input
@@ -116,7 +128,10 @@ const LoginRegister = ({ onLoginSuccess }) => {
           )}
 
           <div className="space-y-2">
-            <label htmlFor="email" className="block text-sm font-medium text-white/80">
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-white/80"
+            >
               Email
             </label>
             <input
@@ -131,7 +146,10 @@ const LoginRegister = ({ onLoginSuccess }) => {
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="password" className="block text-sm font-medium text-white/80">
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-white/80"
+            >
               Password
             </label>
             <input
@@ -148,11 +166,10 @@ const LoginRegister = ({ onLoginSuccess }) => {
           <button
             type="submit"
             disabled={isLoading}
-            className={`w-full py-3 px-4 rounded-lg font-semibold text-white transition-all duration-300 ${
-              isLoading
-                ? "bg-blue-400 cursor-not-allowed"
-                : "bg-white/20 hover:bg-white/30 hover:shadow-lg"
-            } flex items-center justify-center`}
+            className={`w-full py-3 px-4 rounded-lg font-semibold text-white transition-all duration-300 ${isLoading
+              ? "bg-blue-400 cursor-not-allowed"
+              : "bg-white/20 hover:bg-white/30 hover:shadow-lg"
+              } flex items-center justify-center`}
           >
             {isLoading ? (
               <>
