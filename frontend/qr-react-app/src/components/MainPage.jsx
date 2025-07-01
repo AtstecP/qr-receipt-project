@@ -16,7 +16,7 @@ const Dashboard = ({ user, onLogout }) => {
     pendingReceipts: '12'
   });
 
-  const API_BASE_URL = "http://127.0.0.1:8000";
+  const API_BASE_URL = "http://localhost:8000";
 
   const handleGetReceipt = async () => {
     if (!total) {
@@ -26,14 +26,18 @@ const Dashboard = ({ user, onLogout }) => {
 
     setIsLoading(true);
     setError('');
-    
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/v1/receipts/qr`, {
-        responseType: 'blob'
-      });
-      
-      const qrCodeUrl = URL.createObjectURL(response.data);
-      setQrCode(qrCodeUrl);
+      const response = await axios.post(
+        `${API_BASE_URL}/api/v1/receipts/`,
+        {
+          "total": Number(total)
+        },
+         { withCredentials: true }
+      );
+
+
+      // const qrCodeUrl = URL.createObjectURL(response.data);
+      setQrCode(response.data.pdf_endpoint);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to generate receipt');
     } finally {
@@ -41,13 +45,6 @@ const Dashboard = ({ user, onLogout }) => {
     }
   };
 
-  useEffect(() => {
-    return () => {
-      if (qrCode) {
-        URL.revokeObjectURL(qrCode);
-      }
-    };
-  }, [qrCode]);
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -57,37 +54,37 @@ const Dashboard = ({ user, onLogout }) => {
           <h1 className="text-xl font-bold text-gray-800">{user?.companyName || 'Business'}</h1>
           <p className="text-sm text-gray-500">Receipt Management</p>
         </div>
-        
+
         <nav className="p-4 space-y-2">
-          <button 
+          <button
             onClick={() => setActiveTab('dashboard')}
             className={`flex items-center w-full p-3 rounded-lg transition-colors ${activeTab === 'dashboard' ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-100'}`}
           >
             <FiHome className="mr-3" />
             Dashboard
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab('receipts')}
             className={`flex items-center w-full p-3 rounded-lg transition-colors ${activeTab === 'receipts' ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-100'}`}
           >
             <FiFileText className="mr-3" />
             Receipts
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab('analytics')}
             className={`flex items-center w-full p-3 rounded-lg transition-colors ${activeTab === 'analytics' ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-100'}`}
           >
             <FiPieChart className="mr-3" />
             Analytics
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab('payments')}
             className={`flex items-center w-full p-3 rounded-lg transition-colors ${activeTab === 'payments' ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-100'}`}
           >
             <FiDollarSign className="mr-3" />
             Payments
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab('settings')}
             className={`flex items-center w-full p-3 rounded-lg transition-colors ${activeTab === 'settings' ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-100'}`}
           >
@@ -95,9 +92,9 @@ const Dashboard = ({ user, onLogout }) => {
             Settings
           </button>
         </nav>
-        
+
         <div className="p-4 border-t border-gray-200 mt-auto">
-          <button 
+          <button
             onClick={onLogout}
             className="flex items-center w-full p-3 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
           >
@@ -139,11 +136,10 @@ const Dashboard = ({ user, onLogout }) => {
               <button
                 onClick={handleGetReceipt}
                 disabled={!total || isLoading}
-                className={`w-full py-2 px-4 rounded-lg font-medium text-white transition-colors ${
-                  !total || isLoading
-                    ? "bg-blue-300 cursor-not-allowed"
-                    : "bg-blue-600 hover:bg-blue-700"
-                }`}
+                className={`w-full py-2 px-4 rounded-lg font-medium text-white transition-colors ${!total || isLoading
+                  ? "bg-blue-300 cursor-not-allowed"
+                  : "bg-blue-600 hover:bg-blue-700"
+                  }`}
               >
                 {isLoading ? 'Generating...' : 'Generate Receipt'}
               </button>
@@ -161,9 +157,9 @@ const Dashboard = ({ user, onLogout }) => {
             {qrCode ? (
               <>
                 <h3 className="text-lg font-semibold text-gray-700 mb-4">Receipt QR Code</h3>
-                <img 
-                  src={qrCode} 
-                  alt="Receipt QR Code" 
+                <img
+                  src={`data:image/png;base64,${qrCode}`}
+                  alt="Receipt QR Code"
                   className="w-48 h-48 bg-white p-2 rounded-lg border border-gray-200"
                 />
                 <button

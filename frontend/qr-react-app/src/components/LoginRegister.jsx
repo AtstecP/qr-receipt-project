@@ -26,9 +26,11 @@ const LoginRegister = ({ onLoginSuccess }) => {
           password,
         });
 
-        localStorage.setItem("jwtToken", response.data.access_token);
+        // localStorage.setItem("jwtToken", response.data.token);
+       document.cookie = `token=${response.data.token}; path=/; secure; samesite=strict`;
+
         localStorage.setItem("userEmail", email);
-        axios.defaults.headers.common["Authorization"] = `Bearer ${response.data.access_token}`;
+        // axios.defaults.headers.common["Authorization"] = `Bearer ${response.data.token}`;
         onLoginSuccess(email);
         navigate("/");
       } else {
@@ -42,9 +44,10 @@ const LoginRegister = ({ onLoginSuccess }) => {
           email,
           password,
         });
-        localStorage.setItem("jwtToken", loginResponse.data.access_token);
+        //localStorage.setItem("jwtToken", loginResponse.data.token);
         localStorage.setItem("userEmail", email);
-        axios.defaults.headers.common["Authorization"] = `Bearer ${loginResponse.data.access_token}`;
+        // axios.defaults.headers.common["Authorization"] = `Bearer ${loginResponse.data.token}`;
+        document.cookie = `token=${response.data.token}; path=/; secure; samesite=strict`;
         onLoginSuccess(email);
         navigate("/");
       }
@@ -159,11 +162,10 @@ const LoginRegister = ({ onLoginSuccess }) => {
             <button
               type="submit"
               disabled={isLoading}
-              className={`w-full py-2.5 px-4 rounded-lg font-medium text-white transition-colors ${
-                isLoading
+              className={`w-full py-2.5 px-4 rounded-lg font-medium text-white transition-colors ${isLoading
                   ? "bg-blue-400 cursor-not-allowed"
                   : "bg-blue-600 hover:bg-blue-700"
-              } flex items-center justify-center`}
+                } flex items-center justify-center`}
             >
               {isLoading ? (
                 <>
