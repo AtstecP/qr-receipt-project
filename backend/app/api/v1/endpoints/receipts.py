@@ -9,17 +9,18 @@ from app.models.user import User
 from app.schemas.receipt import ReceiptCreate, ReceiptResponse
 from app.db.session import get_db
 from app.services.recipts.qr_code import generate_qr
-
+from app.services.recipts.pdf_generator import generate_receipt_pdf
 router = APIRouter()
 
-@router.get("/qr")
-async def get_qr():
-    file_name = generate_qr('http://192.168.0.144:8000/api/v1/receipts/pdf')
-    return FileResponse(f'{file_name}')
+# @router.get("/qr")
+# async def get_qr():
+#     file_name = generate_qr('http://192.168.0.144:8000/api/v1/receipts/pdf')
+#     return FileResponse(f'{file_name}')
 
-@router.get("/pdf")
-async def get_qr():
-    return FileResponse('app/services/your_pdf_file_here.pdf')
+@router.get("/pdf/{receipt_id}")
+async def get_pdf(receipt_id: str, db=Depends(get_db)):
+    path =generate_receipt_pdf(db, receipt_id)
+    return FileResponse(path)
 
 @router.post("/", response_model=ReceiptResponse)
 async def create_receipt(
@@ -38,5 +39,5 @@ async def create_receipt(
     db.add(db_receipt)
     db.commit()
 
-    pdf_endpoint = generate_qr('http://192.168.0.144:8000/api/v1/receipts/pdf/{user_id}')
+    pdf_endpoint = generate_qr('http://192.168.0.144:8000/api/v1/receipts/pdf/{uuid_key}')
     return JSONResponse({'pdf_endpoint' :pdf_endpoint})

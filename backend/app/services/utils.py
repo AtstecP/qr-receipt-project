@@ -27,6 +27,10 @@ def get_user_id(db: Session, email: str) -> int | None:
     user = db.query(User.id).filter(User.email == email).first()
     return user.id if user else None
 
+def get_company_name(db: Session, id: int) -> str | None:
+    user = db.query(User.id).filter(User.id == id).first()
+    return user.company_name if user else None
+
 def create_refresh_token(data: dict) -> str:
     to_encode = data.copy()
     to_encode.update({

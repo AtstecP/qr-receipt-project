@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Receipt #{{ receipt_id }}</title>
+  <title>Receipt #{{ company_name }}</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 2rem; }
     header, footer { margin-bottom: 1.5rem; }
@@ -15,15 +15,15 @@
 <body>
 
 <header>
-  <h1>{{ company_name }}</h1>
+  <h1>{{ user_id }}</h1>
   <p>
     <strong>Receipt&nbsp;ID:</strong> {{ receipt_id }}<br>
     <strong>User&nbsp;ID:</strong> {{ user_id }}<br>
-    <strong>Date&nbsp;Time:</strong> {{ timestamp | replace("T", " ") | replace("Z", "") }}
+    <strong>Date&nbsp;Time:</strong> {{ transaction_date | replace("T", " ") | replace("Z", "") }}
   </p>
 </header>
 
-<table>
+<!-- <table>
   <thead>
     <tr>
       <th>Item</th>
@@ -32,7 +32,7 @@
       <th style="text-align:right;">Line&nbsp;Total&nbsp;($)</th>
     </tr>
   </thead>
-  <tbody>
+   <tbody>
     {% for item in items_json %}
     <tr>
       <td>{{ item.name }}</td>
@@ -48,7 +48,7 @@
       <td style="text-align:right;">{{ "%.2f"|format(total) }}</td>
     </tr>
   </tfoot>
-</table>
+</table> -->
 
 <footer>
   <p>Thank you for your business!</p>
