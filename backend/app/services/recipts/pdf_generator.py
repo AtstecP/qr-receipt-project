@@ -60,8 +60,10 @@ def generate_receipt_pdf(db: Session, recipt_id: str):
   env = Environment(loader=FileSystemLoader(template_path))
   template = env.get_template('receipt.html') 
   receipt = db.query(Receipt).filter(Receipt.receipt_id == recipt_id).first()
-  receipt_data = model_to_dict(receipt) + {'company_name' : get_company_name(db, receipt.user_id)}
-  print(receipt_data)
+  receipt_data = {
+    **model_to_dict(receipt),
+    'company_name': get_company_name(db, receipt.user_id)
+}
   html = template.render(dict(receipt_data))
   content = from_string(html)
   try:

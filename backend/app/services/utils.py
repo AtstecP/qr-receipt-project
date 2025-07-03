@@ -28,7 +28,7 @@ def get_user_id(db: Session, email: str) -> int | None:
     return user.id if user else None
 
 def get_company_name(db: Session, id: int) -> str | None:
-    user = db.query(User.id).filter(User.id == id).first()
+    user = db.query(User).filter(User.id == id).first()
     return user.company_name if user else None
 
 def create_refresh_token(data: dict) -> str:
@@ -62,7 +62,7 @@ def verify_token(token: str = Cookie(None)):
                 detail="Token payload invalid"
             )
         return username
-    except jwt.PyJWTError:
+    except jwt.JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token"

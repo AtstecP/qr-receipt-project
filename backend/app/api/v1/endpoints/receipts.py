@@ -39,5 +39,5 @@ async def create_receipt(
     db.add(db_receipt)
     db.commit()
 
-    pdf_endpoint = generate_qr('http://192.168.0.144:8000/api/v1/receipts/pdf/{uuid_key}')
+    pdf_endpoint = generate_qr(f'http://192.168.0.144:8000/api/v1/receipts/pdf/{uuid_key}')
     return JSONResponse({'pdf_endpoint' :pdf_endpoint})

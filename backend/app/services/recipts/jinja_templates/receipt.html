@@ -1,58 +1,121 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Receipt #{{ company_name }}</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 2rem; }
-    header, footer { margin-bottom: 1.5rem; }
-    h1 { margin: 0 0 .25rem 0; }
-    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-    th, td { padding: .5rem; border-bottom: 1px solid #ccc; text-align: left; }
-    tfoot td { font-weight: bold; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receipt {{ receipt_id }}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+        }
+        .receipt-container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            position: relative;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+            border-bottom: 2px dashed #eee;
+            padding-bottom: 20px;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0;
+            font-size: 24px;
+        }
+        .receipt-id {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        .details {
+            margin-bottom: 25px;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .detail-label {
+            font-weight: 600;
+            color: #7f8c8d;
+        }
+        .total {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2c3e50;
+            border-top: 2px solid #eee;
+            padding-top: 15px;
+            margin-top: 15px;
+            text-align: right;
+        }
+        .qr-code {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px dashed #eee;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 12px;
+            color: #95a5a6;
+        }
+    </style>
 </head>
 <body>
+    <div class="receipt-container">
+        <div class="header">
+            <h1>Transaction Receipt</h1>
+            <div class="receipt-id">ID: {{ receipt_id }}</div>
+        </div>
 
-<header>
-  <h1>{{ user_id }}</h1>
-  <p>
-    <strong>Receipt&nbsp;ID:</strong> {{ receipt_id }}<br>
-    <strong>User&nbsp;ID:</strong> {{ user_id }}<br>
-    <strong>Date&nbsp;Time:</strong> {{ transaction_date | replace("T", " ") | replace("Z", "") }}
-  </p>
-</header>
+        <div class="details">
+            <div class="detail-row">
+                <span class="detail-label">Company:</span>
+                <span>{{ company_name }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Issued To:</span>
+                <span>{{ None if user else "Guest" }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Date:</span>
+                <span>{{ transaction_date.strftime('%B %d, %Y at %H:%M') }}</span>
+            </div>
+        </div>
 
-<!-- <table>
-  <thead>
-    <tr>
-      <th>Item</th>
-      <th style="text-align:center;">Qty</th>
-      <th style="text-align:right;">Price&nbsp;($)</th>
-      <th style="text-align:right;">Line&nbsp;Total&nbsp;($)</th>
-    </tr>
-  </thead>
-   <tbody>
-    {% for item in items_json %}
-    <tr>
-      <td>{{ item.name }}</td>
-      <td style="text-align:center;">{{ item.quantity }}</td>
-      <td style="text-align:right;">{{ "%.2f"|format(item.price) }}</td>
-      <td style="text-align:right;">{{ "%.2f"|format(item.price * item.quantity) }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-  <tfoot>
-    <tr>
-      <td colspan="3" style="text-align:right;">Total&nbsp;($)</td>
-      <td style="text-align:right;">{{ "%.2f"|format(total) }}</td>
-    </tr>
-  </tfoot>
-</table> -->
+        <!-- Items would go here if you had them -->
+        <!-- <div class="items">
+            {% for item in items %}
+            <div class="item-row">
+                ...
+            </div>
+            {% endfor %}
+        </div> -->
 
-<footer>
-  <p>Thank you for your business!</p>
-</footer>
+        <div class="total">
+            Total: ${{ "%.2f"|format(total) }}
+        </div>
 
+        <!-- <div class="qr-code">
+            <img src="{{ qr_code_url }}" alt="Receipt QR Code" width="150">
+            <p>Scan to verify this receipt</p>
+        </div> -->
+
+        <div class="footer">
+            Thank you for your business!<br>
+
+        </div>
+    </div>
 </body>
 </html>
