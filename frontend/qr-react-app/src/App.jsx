@@ -3,24 +3,32 @@ import { useState, useEffect } from 'react';
 import LoginRegister from './components/LoginRegister';
 import MainPage from './components/MainPage';
 
+function getCookie(name) {
+  const matches = document.cookie.match(
+    new RegExp(
+      "(?:^|; )" +
+        name.replace(/([$?*|{}\(\)\[\]\\\/\+^])/g, "\\$1") +
+        "=([^;]*)"
+    )
+  );
+  return matches ? decodeURIComponent(matches[1]) : undefined;
+}
+
 function App() {
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
-  // Проверяем токен при загрузке приложения
   useEffect(() => {
-    const token = localStorage.getItem('jwtToken');
+    const token = getCookie('token');
     if (token) {
-      // Здесь можно добавить проверку токена на сервере
-      // Для примера просто сохраняем минимальные данные
       setUser({ email: localStorage.getItem('userEmail') });
     }
   }, []);
 
-  const handleLoginSuccess = (userData) => {
-    setUser(userData);
-    localStorage.setItem('userEmail', userData.email); // Сохраняем email
-    navigate('/'); // Перенаправляем на главную
+  const handleLoginSuccess = (email) => {
+    setUser(email);
+    localStorage.setItem('userEmail', email); 
+    navigate('/'); 
   };
 
   const handleLogout = () => {

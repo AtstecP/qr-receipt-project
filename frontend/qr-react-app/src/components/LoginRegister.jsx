@@ -40,7 +40,7 @@ const LoginRegister = ({ onLoginSuccess }) => {
           password,
         });
 
-        const loginResponse = await axios.post(`${API_BASE_URL}/api/v1/login`, {
+        const response = await axios.post(`${API_BASE_URL}/api/v1/login`, {
           email,
           password,
         });
