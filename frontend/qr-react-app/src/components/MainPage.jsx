@@ -16,8 +16,8 @@ const Dashboard = ({ user, onLogout }) => {
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('dashboard');
   const [businessMetrics, setBusinessMetrics] = useState({
-    thisMonthRevenue: '0',
-    todayRevenue: '1,542',
+    total: '0',
+    total_today: '0',
   });
   const [recentActivity, setRecentActivity] = useState([]);
 
@@ -41,6 +41,7 @@ const Dashboard = ({ user, onLogout }) => {
       );
 
       setQrCode(response.data.pdf_endpoint);
+      //fetchStats();
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to generate receipt');
     } finally {
@@ -55,10 +56,11 @@ const Dashboard = ({ user, onLogout }) => {
       });
 
       const data = res.data;
-
+      console.log(data);
       setBusinessMetrics((prev) => ({
         ...prev,
-        thisMonthRevenue: data.total?.toLocaleString() || "0",
+        'total': data.total,
+        'total_today': data.total_today
       }));
 
       setRecentActivity(data.recent_receipts || []);
@@ -69,7 +71,7 @@ const Dashboard = ({ user, onLogout }) => {
 
   useEffect(() => {
     fetchStats();
-  }, []);
+  }, [qrCode]);
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -240,33 +242,31 @@ const Dashboard = ({ user, onLogout }) => {
 
         {/* Business Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-          {/* This Month Revenue */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <h3 className="text-lg font-semibold text-gray-700 mb-4">
-              This Month Revenue
-            </h3>
-            <p className="text-3xl font-bold text-gray-900">
-              ${businessMetrics.thisMonthRevenue}
-            </p>
-            <p className="text-green-500 text-sm mt-2">+12% from last month</p>
-          </div>
-
-          {/* Today's Revenue (still static for now) */}
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
             <h3 className="text-lg font-semibold text-gray-700 mb-4">
               Today's Revenue
             </h3>
             <p className="text-3xl font-bold text-gray-900">
-              ${businessMetrics.todayRevenue}
+              ${businessMetrics.total_today}
             </p>
             <p className="text-gray-500 text-sm mt-2">
               From 24 transactions
             </p>
           </div>
 
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <h3 className="text-lg font-semibold text-gray-700 mb-4">
+              Total Revenue
+            </h3>
+            <p className="text-3xl font-bold text-gray-900">
+              ${businessMetrics.total}
+            </p>
+            
+          </div>
+
           {/* Recent Activity */}
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 md:col-span-2">
-            <h3 className="text-lg font-semibold text-gray-700 mb-4">
+            <h3 className="text-lg font-bold text-gray-700 mb-4">
               Recent Activity
             </h3>
             {recentActivity.length > 0 ? (
