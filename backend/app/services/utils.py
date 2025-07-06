@@ -5,10 +5,11 @@ from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 from fastapi import Cookie
 from fastapi import HTTPException, status
-
+from sqlalchemy.sql import functions
 
 from app.db.session import get_db
 from app.models.user import User
+from app.models.receipt import Receipt
 from app.core.config import settings
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 #oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/token")
@@ -75,3 +76,8 @@ def authenticate_user(db: Session, email: str, password: str):
     if not verify_password(password, user.hashed_password):
         return False
     return user
+
+def get_user_stats(db: Session, email: str):
+    user = db.query(User.id).filter(User.email == email).first()
+    result =db.query(functions.sum(Receipt.total)).scalar()
+    pass

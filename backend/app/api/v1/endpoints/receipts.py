@@ -3,7 +3,7 @@ from fastapi.responses import FileResponse
 from fastapi.responses import JSONResponse
 
 from app.services.utils import verify_token, get_user_id
-from app.services.recipts.utils import generate_uuid
+from app.services.recipts.utils import generate_uuid, get_user_stats
 from app.models.receipt import Receipt
 from app.models.user import User
 from app.schemas.receipt import ReceiptCreate, ReceiptResponse
@@ -17,16 +17,25 @@ router = APIRouter()
 #     file_name = generate_qr('http://192.168.0.144:8000/api/v1/receipts/pdf')
 #     return FileResponse(f'{file_name}')
 
+@router.get("/stats")
+async def get_stats(
+    db=Depends(get_db),
+    current_user = Depends(verify_token)
+    ):
+    
+    return get_user_stats(db, current_user) 
+
 @router.get("/pdf/{receipt_id}")
 async def get_pdf(receipt_id: str, db=Depends(get_db)):
-    path =generate_receipt_pdf(db, receipt_id)
+    path=generate_receipt_pdf(db, receipt_id)
     return FileResponse(path)
 
 @router.post("/", response_model=ReceiptResponse)
 async def create_receipt(
     receipt_data: ReceiptCreate,
     db=Depends(get_db),
-    current_user = Depends(verify_token)):
+    current_user = Depends(verify_token)
+    ):
     uuid_key = str(generate_uuid())
     user_id = get_user_id(db, current_user)
     db_receipt = Receipt(
