@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import func
+from sqlalchemy import func, desc
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 
@@ -16,6 +16,7 @@ def get_user_stats(db: Session, email: str):
     if user_id is None:
         return {
             'total': 0,
+            'total_today': 0,
             'recent_receipts': []
         }
 
@@ -28,6 +29,14 @@ def get_user_stats(db: Session, email: str):
 
     twenty_four_hours_ago = datetime.utcnow() - timedelta(hours=24)
 
+    total_today = db.query(func.sum(Receipt.total)) \
+        .filter(
+            Receipt.user_id == user_id,
+            Receipt.transaction_date >= twenty_four_hours_ago
+            ).scalar()
+    
+    if total_revenue is None:
+        total_revenue = 0
 
     recent_receipts = db.query(
         Receipt.total,
@@ -35,6 +44,8 @@ def get_user_stats(db: Session, email: str):
     ).filter(
         Receipt.user_id == user_id,
         Receipt.transaction_date >= twenty_four_hours_ago
+    ).order_by(
+        desc(Receipt.transaction_date)
     ).all()
 
     # Format receipts as list of dicts
@@ -48,6 +59,7 @@ def get_user_stats(db: Session, email: str):
 
     result = {
         'total': total_revenue,
+        'total_today': total_today,
         'recent_receipts': recent_receipts_list
     }
     return result
