@@ -6,15 +6,13 @@ import App from './App.jsx'
 // Initialize axios defaults (optional but recommended)
 import axios from 'axios'
 axios.defaults.baseURL = 'http://127.0.0.1:8000'
+axios.defaults.withCredentials = true;
 
-// Set up axios interceptor for JWT tokens
 axios.interceptors.request.use((config) => {
-  const token = localStorage.getItem('jwtToken')
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
-  }
-  return config
-})
+  const token = localStorage.getItem("jwtToken");
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

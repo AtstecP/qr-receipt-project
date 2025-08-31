@@ -1,7 +1,10 @@
+// LoginRegister.jsx
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { FiLogIn, FiUserPlus, FiBriefcase, FiMail, FiLock } from "react-icons/fi";
+
+const API_BASE_URL = "http://127.0.0.1:8000";
 
 const LoginRegister = ({ onLoginSuccess }) => {
   const [isLogin, setIsLogin] = useState(true);
@@ -12,7 +15,13 @@ const LoginRegister = ({ onLoginSuccess }) => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const API_BASE_URL = "http://127.0.0.1:8000";
+  const doLogin = async (email, password) => {
+    const { data } = await axios.post(`${API_BASE_URL}/api/v1/login`, { email, password }, { withCredentials: true });
+    // backend returns { access_token, token_type }
+    if (!data?.access_token) throw new Error("No access token in response");
+    localStorage.setItem("jwtToken", data.access_token); // store for later API calls
+    localStorage.setItem("userEmail", email);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,48 +30,28 @@ const LoginRegister = ({ onLoginSuccess }) => {
 
     try {
       if (isLogin) {
-        const response = await axios.post(`${API_BASE_URL}/api/v1/login`, {
-          email,
-          password,
-        });
-
-        // localStorage.setItem("jwtToken", response.data.token);
-       document.cookie = `token=${response.data.token}; path=/; secure; samesite=strict`;
-
-        localStorage.setItem("userEmail", email);
-        // axios.defaults.headers.common["Authorization"] = `Bearer ${response.data.token}`;
-        onLoginSuccess(email);
-        navigate("/");
+        await doLogin(email, password);
       } else {
-        await axios.post(`${API_BASE_URL}/api/v1/register`, {
-          company_name: companyName,
-          email,
-          password,
-        });
-
-        const response = await axios.post(`${API_BASE_URL}/api/v1/login`, {
-          email,
-          password,
-        });
-        //localStorage.setItem("jwtToken", loginResponse.data.token);
-        localStorage.setItem("userEmail", email);
-        // axios.defaults.headers.common["Authorization"] = `Bearer ${loginResponse.data.token}`;
-        document.cookie = `token=${response.data.token}; path=/; secure; samesite=strict`;
-        onLoginSuccess(email);
-        navigate("/");
+        await axios.post(`${API_BASE_URL}/api/v1/register`, { company_name: companyName, email, password });
+        await doLogin(email, password); // auto-login after register
       }
+      onLoginSuccess?.(email);
+      navigate("/");
     } catch (err) {
-      let errorMessage = "Something went wrong";
-      if (err.response) {
-        if (err.response.status === 403) {
-          errorMessage = "Invalid email or password";
+      let msg = "Something went wrong";
+      if (axios.isAxiosError(err)) {
+        if (err.response) {
+          if (err.response.status === 403) msg = "Invalid email or password";
+          else msg = err.response.data?.detail || err.response.statusText || msg;
+        } else if (err.request) {
+          msg = "No response from server";
         } else {
-          errorMessage = err.response.data.detail || err.response.statusText;
+          msg = err.message || msg;
         }
-      } else if (err.request) {
-        errorMessage = "No response from server";
+      } else if (err instanceof Error) {
+        msg = err.message;
       }
-      setError(errorMessage);
+      setError(msg);
     } finally {
       setIsLoading(false);
     }
@@ -71,30 +60,20 @@ const LoginRegister = ({ onLoginSuccess }) => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <div className="w-full max-w-md bg-white rounded-xl shadow-md overflow-hidden">
-        {/* Header Section */}
+        {/* Header */}
         <div className="bg-blue-600 p-6 text-center">
           <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
-            {isLogin ? (
-              <FiLogIn className="h-8 w-8 text-white" />
-            ) : (
-              <FiUserPlus className="h-8 w-8 text-white" />
-            )}
+            {isLogin ? <FiLogIn className="h-8 w-8 text-white" /> : <FiUserPlus className="h-8 w-8 text-white" />}
           </div>
-          <h2 className="text-2xl font-bold text-white">
-            {isLogin ? "Welcome Back" : "Create Account"}
-          </h2>
+          <h2 className="text-2xl font-bold text-white">{isLogin ? "Welcome Back" : "Create Account"}</h2>
           <p className="text-blue-100 mt-1">
             {isLogin ? "Sign in to your account" : "Get started with our platform"}
           </p>
         </div>
 
-        {/* Form Section */}
+        {/* Form */}
         <div className="p-6">
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
-              {error}
-            </div>
-          )}
+          {error && <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">{error}</div>}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
@@ -162,10 +141,9 @@ const LoginRegister = ({ onLoginSuccess }) => {
             <button
               type="submit"
               disabled={isLoading}
-              className={`w-full py-2.5 px-4 rounded-lg font-medium text-white transition-colors ${isLoading
-                  ? "bg-blue-400 cursor-not-allowed"
-                  : "bg-blue-600 hover:bg-blue-700"
-                } flex items-center justify-center`}
+              className={`w-full py-2.5 px-4 rounded-lg font-medium text-white transition-colors ${
+                isLoading ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
+              } flex items-center justify-center`}
             >
               {isLoading ? (
                 <>
@@ -175,19 +153,12 @@ const LoginRegister = ({ onLoginSuccess }) => {
                     fill="none"
                     viewBox="0 0 24 24"
                   >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path
                       className="opacity-75"
                       fill="currentColor"
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
+                    />
                   </svg>
                   Processing...
                 </>
@@ -206,9 +177,13 @@ const LoginRegister = ({ onLoginSuccess }) => {
               className="text-sm text-blue-600 hover:text-blue-800 font-medium"
             >
               {isLogin ? (
-                <>Don't have an account? <span className="font-semibold">Sign up</span></>
+                <>
+                  Don't have an account? <span className="font-semibold">Sign up</span>
+                </>
               ) : (
-                <>Already have an account? <span className="font-semibold">Sign in</span></>
+                <>
+                  Already have an account? <span className="font-semibold">Sign in</span>
+                </>
               )}
             </button>
           </div>

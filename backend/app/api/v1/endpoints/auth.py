@@ -1,49 +1,99 @@
+# app/routers/auth.py
+from __future__ import annotations
+
+from datetime import datetime, timedelta, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-from datetime import datetime, timedelta
-from jose import JWTError, jwt
-from pydantic import BaseModel
-from typing import Optional
 from fastapi.responses import JSONResponse
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from sqlalchemy.orm import Session
+from sqlalchemy import select
 
-
-from app.services.utils import get_password_hash, authenticate_user, create_access_token, create_refresh_token
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.user import UserCreate, UserLogin, Token
 from app.core.config import settings
+from app.services.utils import (
+    get_password_hash,
+    authenticate_user,
+    create_access_token,
+    create_refresh_token,
+)
 
 router = APIRouter(tags=["auth"])
 
+
 @router.post("/register", status_code=status.HTTP_201_CREATED)
-def register_user(user: UserCreate, db: Session = Depends(get_db)):
-    db_user = db.query(User).filter(User.email == user.email).first()
-    if db_user:
+def register_user(payload: UserCreate, db: Session = Depends(get_db)):
+    # Check if email exists (SQLAlchemy 2.0 style)
+    existing = db.execute(select(User).where(User.email == payload.email)).scalar_one_or_none()
+    if existing:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
+            detail="Email already registered",
         )
-    hashed_password = get_password_hash(user.password)
+
+    # If UserCreate.password is SecretStr in your schema, unwrap it:
+    password_plain = (
+        payload.password.get_secret_value()
+        if hasattr(payload.password, "get_secret_value")
+        else payload.password
+    )
+
+    hashed_password = get_password_hash(password_plain)
+
     user = User(
-        company_name = user.company_name,
-        email=user.email,
-        hashed_password=hashed_password
+        company_name=payload.company_name,
+        email=payload.email,
+        hashed_password=hashed_password,
     )
     db.add(user)
     db.commit()
+    db.refresh(user)
+
     return {"message": "User created successfully"}
 
 
+@router.post("/login", response_model=Token)
+def login_for_access_token(payload: UserLogin, db: Session = Depends(get_db)):
+    # Unwrap SecretStr if you use it in the schema
+    password_plain = (
+        payload.password.get_secret_value()
+        if hasattr(payload.password, "get_secret_value")
+        else payload.password
+    )
 
-@router.post("/login")
-async def login_for_access_token(user: UserLogin, db: Session = Depends(get_db)):
-  if user.email and user.password:
-    user = authenticate_user(db, user.email, user.password)
-    if user:
-      token = create_access_token(data={"sub": user.email})
-      refresh_token = create_refresh_token(data={"sub": user.email,"id": user.id})
-      response = JSONResponse({"token" : token}, status_code=200)
-      response.set_cookie(key="token", value=token)
-      return response
-  return JSONResponse({"msg": "Invalid Credentials"}, status_code=403)
+    user = authenticate_user(db, payload.email, password_plain)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid credentials")
+
+    # Access token (short-lived)
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.email, "uid": user.id},
+        expires_delta=access_token_expires,
+    )
+
+    # Refresh token (longer-lived) — keep in an HttpOnly cookie
+    refresh_token_expires = timedelta(minutes=settings.REFRESH_TTL_MIN)
+    refresh_token = create_refresh_token(
+        data={"sub": user.email, "uid": user.id},
+        expires_delta=refresh_token_expires,
+    )
+
+    # Return token in body (for API clients) and set refresh cookie for browser flows
+    response = JSONResponse(
+        content={"access_token": access_token, "token_type": "bearer"},
+        status_code=status.HTTP_200_OK,
+    )
+    # Secure cookie settings — adjust domain/secure flags to your environment
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=True,          # set False only for local HTTP dev
+        samesite="lax",       # or "strict"/"none" (with secure=True)
+        max_age=int(refresh_token_expires.total_seconds()),
+        expires=int((datetime.now(timezone.utc) + refresh_token_expires).timestamp()),
+        path="/",             # you might scope to /auth/refresh
+    )
+    return response
