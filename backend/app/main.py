@@ -6,11 +6,15 @@ from app.middlewear.auth_mw import AutoRefreshMiddleware
 
 app = FastAPI(title="QR Receipt Generator", version="1.0.0")
 #app.add_middleware(AutoRefreshMiddleware)
-
+DEV_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://10.0.0.198:5173",   # your LAN Vite URL used on phone
+]
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=DEV_ORIGINS, #check it later
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

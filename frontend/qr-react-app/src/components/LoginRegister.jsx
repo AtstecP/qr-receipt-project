@@ -1,10 +1,8 @@
 // LoginRegister.jsx
 import React, { useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { FiLogIn, FiUserPlus, FiBriefcase, FiMail, FiLock } from "react-icons/fi";
-
-const API_BASE_URL = "http://127.0.0.1:8000";
+import api from "../lib/api";
 
 const LoginRegister = ({ onLoginSuccess }) => {
   const [isLogin, setIsLogin] = useState(true);
@@ -16,10 +14,10 @@ const LoginRegister = ({ onLoginSuccess }) => {
   const navigate = useNavigate();
 
   const doLogin = async (email, password) => {
-    const { data } = await axios.post(`${API_BASE_URL}/api/v1/login`, { email, password }, { withCredentials: true });
+    const { data } = await api.post("/api/v1/login", { email, password });
     // backend returns { access_token, token_type }
     if (!data?.access_token) throw new Error("No access token in response");
-    localStorage.setItem("jwtToken", data.access_token); // store for later API calls
+    localStorage.setItem("jwtToken", data.access_token);
     localStorage.setItem("userEmail", email);
   };
 
@@ -27,28 +25,24 @@ const LoginRegister = ({ onLoginSuccess }) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
-
     try {
       if (isLogin) {
         await doLogin(email, password);
       } else {
-        await axios.post(`${API_BASE_URL}/api/v1/register`, { company_name: companyName, email, password });
-        await doLogin(email, password); // auto-login after register
+        await api.post("/api/v1/register", { company_name: companyName, email, password });
+        await doLogin(email, password);
       }
       onLoginSuccess?.(email);
       navigate("/");
     } catch (err) {
       let msg = "Something went wrong";
-      if (axios.isAxiosError(err)) {
-        if (err.response) {
-          if (err.response.status === 403) msg = "Invalid email or password";
-          else msg = err.response.data?.detail || err.response.statusText || msg;
-        } else if (err.request) {
-          msg = "No response from server";
-        } else {
-          msg = err.message || msg;
-        }
-      } else if (err instanceof Error) {
+      const res = err?.response;
+      if (res) {
+        msg = res.status === 403 ? "Invalid email or password"
+          : res.data?.detail || res.statusText || msg;
+      } else if (err?.request) {
+        msg = "No response from server";
+      } else if (err?.message) {
         msg = err.message;
       }
       setError(msg);
@@ -60,7 +54,6 @@ const LoginRegister = ({ onLoginSuccess }) => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <div className="w-full max-w-md bg-white rounded-xl shadow-md overflow-hidden">
-        {/* Header */}
         <div className="bg-blue-600 p-6 text-center">
           <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
             {isLogin ? <FiLogIn className="h-8 w-8 text-white" /> : <FiUserPlus className="h-8 w-8 text-white" />}
@@ -71,7 +64,6 @@ const LoginRegister = ({ onLoginSuccess }) => {
           </p>
         </div>
 
-        {/* Form */}
         <div className="p-6">
           {error && <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">{error}</div>}
 
@@ -145,28 +137,7 @@ const LoginRegister = ({ onLoginSuccess }) => {
                 isLoading ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
               } flex items-center justify-center`}
             >
-              {isLoading ? (
-                <>
-                  <svg
-                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    />
-                  </svg>
-                  Processing...
-                </>
-              ) : isLogin ? (
-                "Sign In"
-              ) : (
-                "Create Account"
-              )}
+              {isLogin ? "Sign In" : "Create Account"}
             </button>
           </form>
 
@@ -176,15 +147,8 @@ const LoginRegister = ({ onLoginSuccess }) => {
               onClick={() => setIsLogin(!isLogin)}
               className="text-sm text-blue-600 hover:text-blue-800 font-medium"
             >
-              {isLogin ? (
-                <>
-                  Don't have an account? <span className="font-semibold">Sign up</span>
-                </>
-              ) : (
-                <>
-                  Already have an account? <span className="font-semibold">Sign in</span>
-                </>
-              )}
+              {isLogin ? <>Don't have an account? <span className="font-semibold">Sign up</span></>
+                       : <>Already have an account? <span className="font-semibold">Sign in</span></>}
             </button>
           </div>
         </div>
