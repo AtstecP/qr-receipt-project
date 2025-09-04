@@ -4,8 +4,10 @@ Thumbs.db
 *.log
 *.swp
 *.swo
+*.pdf
 *~
 ~$*
+
 
 # Python
 __pycache__/

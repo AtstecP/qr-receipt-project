@@ -5,11 +5,12 @@ from app.core.config import settings
 from app.middlewear.auth_mw import AutoRefreshMiddleware
 
 app = FastAPI(title="QR Receipt Generator", version="1.0.0")
-#app.add_middleware(AutoRefreshMiddleware)
+# app.add_middleware(AutoRefreshMiddleware)
+
 DEV_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-    "http://10.0.0.198:5173",   # your LAN Vite URL used on phone
+    "http://10.0.0.198:5173",  
 ]
 # CORS
 app.add_middleware(
@@ -20,7 +21,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
 app.include_router(auth.router, prefix="/api/v1", tags=["auth"])
 app.include_router(receipts.router, prefix="/api/v1", tags=["receipts"])
-#app.include_router(templates.router, prefix="/api/v1/templates", tags=["templates"])
+# app.include_router(templates.router, prefix="/api/v1/templates", tags=["templates"])
+
+# uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload

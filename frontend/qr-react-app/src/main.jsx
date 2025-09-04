@@ -4,7 +4,6 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter as Router } from "react-router-dom";
 import App from "./App.jsx";
 
-// ⛔️ No axios setup here anymore — it's all inside lib/api.js
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -13,3 +12,4 @@ createRoot(document.getElementById("root")).render(
     </Router>
   </StrictMode>
 );
+// npx vite --host

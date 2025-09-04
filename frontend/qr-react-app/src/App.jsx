@@ -1,65 +1,76 @@
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
-import LoginRegister from './components/LoginRegister';
-import MainPage from './components/MainPage';
-
-function getCookie(name) {
-  const matches = document.cookie.match(
-    new RegExp(
-      "(?:^|; )" +
-        name.replace(/([$?*|{}\(\)\[\]\\\/\+^])/g, "\\$1") +
-        "=([^;]*)"
-    )
-  );
-  return matches ? decodeURIComponent(matches[1]) : undefined;
-}
+// App.jsx
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import LoginRegister from "./components/LoginRegister";
+import MainPage from "./components/MainPage";
+// If you have the axios client with signOut helper:
+// import { signOut } from "./lib/api";
 
 function App() {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(null); // { email: string } | null
   const navigate = useNavigate();
 
+  // On first load, restore session from localStorage
   useEffect(() => {
-    const token = getCookie('token');
-    if (token) {
-      setUser({ email: localStorage.getItem('userEmail') });
-    }
+    const token = localStorage.getItem("jwtToken");
+    const email = localStorage.getItem("userEmail");
+    if (token && email) setUser({ email });
   }, []);
 
+  // Optional: react to auth changes from other tabs
+  useEffect(() => {
+    const onStorage = (e) => {
+      if (e.key === "jwtToken" && !e.newValue) {
+        setUser(null);
+        navigate("/login", { replace: true });
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [navigate]);
+
   const handleLoginSuccess = (email) => {
-    setUser(email);
-    localStorage.setItem('userEmail', email); 
-    navigate('/'); 
+    // Your LoginRegister should already set localStorage.jwtToken
+    localStorage.setItem("userEmail", email);
+    setUser({ email });
+    navigate("/", { replace: true });
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('jwtToken');
-    localStorage.removeItem('userEmail');
+  const handleLogout = async () => {
+    try {
+      // If you exposed a logout endpoint:
+      // await signOut(); // clears refresh cookie server-side
+    } catch {/* ignore */}
+    localStorage.removeItem("jwtToken");
+    localStorage.removeItem("userEmail");
     setUser(null);
-    navigate('/login');
+    navigate("/login", { replace: true });
   };
 
   return (
     <Routes>
-      <Route 
-        path="/login" 
+      <Route
+        path="/login"
         element={
           user ? (
             <Navigate to="/" replace />
           ) : (
             <LoginRegister onLoginSuccess={handleLoginSuccess} />
           )
-        } 
+        }
       />
-      <Route 
-        path="/" 
+      <Route
+        path="/"
         element={
           user ? (
             <MainPage user={user} onLogout={handleLogout} />
           ) : (
             <Navigate to="/login" replace />
           )
-        } 
+        }
       />
+      {/* Fallback */}
+      <Route path="*" element={<Navigate to={user ? "/" : "/login"} replace />} />
     </Routes>
   );
 }

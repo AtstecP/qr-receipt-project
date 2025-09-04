@@ -3,10 +3,12 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Response
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import select
+from jose import jwt, JWTError, ExpiredSignatureError
+
 
 from app.db.session import get_db
 from app.models.user import User
@@ -96,4 +98,43 @@ def login_for_access_token(payload: UserLogin, db: Session = Depends(get_db)):
         expires=int((datetime.now(timezone.utc) + refresh_token_expires).timestamp()),
         path="/",             # you might scope to /auth/refresh
     )
+    return response
+
+@router.post("/refresh", response_model=Token)
+def refresh_access_token(request: Request):
+    """
+    Issue a new access token if the refresh_token cookie is valid.
+    """
+    refresh_cookie = request.cookies.get("refresh_token")
+    if not refresh_cookie:
+        raise HTTPException(status_code=401, detail="Missing refresh token")
+
+    try:
+        payload = jwt.decode(
+            refresh_cookie,
+            settings.SECRET_KEY,
+            algorithms=[settings.ALGORITHM],
+        )
+        if payload.get("type") != "refresh":
+            raise HTTPException(status_code=401, detail="Invalid token type")
+    except ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Refresh token expired")
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
+
+    # Mint a new access token
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    data = {"sub": payload.get("sub"), "uid": payload.get("uid")}
+    new_access = create_access_token(data=data, expires_delta=access_token_expires)
+
+    return {"access_token": new_access, "token_type": "bearer"}
+
+
+@router.post("/logout")
+def logout(response: Response):
+    """
+    Clear the refresh_token cookie (log the user out).
+    """
+    response = JSONResponse(content={"message": "Logged out"}, status_code=200)
+    response.delete_cookie("refresh_token", path="/")
     return response
