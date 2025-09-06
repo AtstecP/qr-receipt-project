@@ -15,9 +15,11 @@ from app.db.session import get_db
 from app.models.receipt import Receipt
 from app.schemas.receipt import ReceiptCreate, ReceiptResponse
 from app.services.utils import verify_token, get_user_id
-from app.services.recipts.qr_code import generate_qr
-from app.services.recipts.pdf_generator import generate_receipt_pdf
+from app.services.receipts.qr_code import generate_qr
+from app.services.receipts.pdf_generator import generate_receipt_pdf
 from app.core.config import settings
+
+from app.services.receipts.utils import get_user_stats, get_receipts
 
 router = APIRouter(prefix="/receipts", tags=["receipts"])
 
@@ -27,9 +29,16 @@ def get_stats(
     db: Session = Depends(get_db),
     current_user: Any = Depends(verify_token),
 ):
-    # Assuming your get_user_stats already returns a JSON-serializable structure
-    from app.services.recipts.utils import get_user_stats
+    
     return get_user_stats(db, current_user)
+
+
+@router.get("/all")
+def get_stats(
+    db: Session = Depends(get_db),
+    current_user: Any = Depends(verify_token),
+):
+    return get_receipts(db, current_user)
 
 
 @router.get("/pdf/{receipt_id}")
@@ -63,7 +72,7 @@ def create_receipt(
         receipt_id=rid,
         user_id=str(user_id),
         transaction_date=receipt_data.transaction_date,
-        total=Decimal(receipt_data.total),  # if schema already Decimal, you can pass directly
+        total=Decimal(receipt_data.total),  
     )
     db.add(row)
     db.commit()

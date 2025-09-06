@@ -13,10 +13,8 @@ class ReceiptBase(BaseModel):
     transaction_date: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc)
     )
-
-    # if you might populate by field name when using aliases later
     model_config = ConfigDict(
-        str_strip_whitespace=True,     # trims incoming strings
+        str_strip_whitespace=True,     
         populate_by_name=True,
     )
 
@@ -29,7 +27,7 @@ class ReceiptResponse(ReceiptBase):
     pdf_endpoint: str
     # If you return ORM rows directly from FastAPI:
     model_config = ConfigDict(
-        from_attributes=True,          # replaces v1's orm_mode=True
+        from_attributes=True,          
         str_strip_whitespace=True,
         populate_by_name=True,
     )

@@ -19,6 +19,8 @@ from app.services.utils import (
     authenticate_user,
     create_access_token,
     create_refresh_token,
+    verify_token,
+    get_user
 )
 
 router = APIRouter(tags=["auth"])
@@ -138,3 +140,18 @@ def logout(response: Response):
     response = JSONResponse(content={"message": "Logged out"}, status_code=200)
     response.delete_cookie("refresh_token", path="/")
     return response
+
+@router.get("/me")
+def get_me(
+    db: Session = Depends(get_db),
+    current_user: Any = Depends(verify_token),  # this is the email from the token
+):
+    user: User | None = get_user(db, current_user)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    return {
+        "id": user.id,
+        "email": user.email,
+        "company_name": user.company_name,
+    }# eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhdHN0ZWM4MEBnbWFpbC5jb20iLCJ1aWQiOjgsImV4cCI6MTc1NzAzMTM1MCwidHlwZSI6ImFjY2VzcyJ9.5qepgftEj1CZLJI2xp9ODvWOgHR26bWwyOyxmeHxXf0

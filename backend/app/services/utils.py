@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.models.user import User
 from app.models.receipt import Receipt
-
+from app.models.user import User
 
 # ---- password hashing (prefer argon2; fallback to bcrypt) ----
 def _build_pwd_context() -> CryptContext:
@@ -46,6 +46,9 @@ def get_company_name(db: Session, id: int) -> Optional[str]:
     row = db.execute(select(User.company_name).where(User.id == id)).first()
     return row[0] if row else None
 
+def get_user_info(db: Session, email: str):
+    user_info = db.query(User.company_name).filter(User.email == email)
+    return user_info
 
 # ---- JWT helpers ----
 def _expiry_from_delta(expires_delta: Optional[timedelta], fallback_minutes: int) -> datetime:

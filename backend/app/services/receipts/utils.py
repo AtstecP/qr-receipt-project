@@ -6,10 +6,8 @@ from datetime import datetime, timedelta
 from app.services.utils import get_user_id
 from app.models.receipt import Receipt
 
-
 def generate_uuid():
     return uuid.uuid1()
-
 
 def get_user_stats(db: Session, email: str):
     user_id = get_user_id(db, email)
@@ -63,3 +61,25 @@ def get_user_stats(db: Session, email: str):
         'recent_receipts': recent_receipts_list
     }
     return result
+
+
+def get_receipts(db: Session, email: str):
+    user_id = get_user_id(db, email)
+    receipts = db.query(
+        Receipt.total,
+        Receipt.transaction_date,
+        Receipt.receipt_id
+    ).filter(
+        Receipt.user_id == user_id
+    ).order_by(
+        desc(Receipt.transaction_date)
+    ).all()
+    receipts_list = [
+        {
+            'id' : r.receipt_id,
+            'total': float(r.total),
+            'transaction_date': r.transaction_date
+        }
+        for r in receipts
+    ]
+    return receipts_list
