@@ -58,6 +58,3 @@ A web application that generates receipts and provides them via QR code. Users c
 - The frontend is located in the `frontend/qr-react-app` directory.
 - It uses **TailwindCSS** for styling and **Vite** for fast build and hot-reload capabilities.
 
-### Mobile
-
-- The `mobile/` folder can be used for potential mobile app development (if needed).
