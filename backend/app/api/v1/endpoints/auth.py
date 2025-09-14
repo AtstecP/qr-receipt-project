@@ -12,6 +12,7 @@ from jose import jwt, JWTError, ExpiredSignatureError
 
 from app.db.session import get_db
 from app.models.user import User
+from app.models.receipt_template import ReceiptTemplate
 from app.schemas.user import UserCreate, UserLogin, Token
 from app.core.config import settings
 from app.services.utils import (
@@ -28,7 +29,6 @@ router = APIRouter(tags=["auth"])
 
 @router.post("/register", status_code=status.HTTP_201_CREATED)
 def register_user(payload: UserCreate, db: Session = Depends(get_db)):
-    # Check if email exists (SQLAlchemy 2.0 style)
     existing = db.execute(select(User).where(User.email == payload.email)).scalar_one_or_none()
     if existing:
         raise HTTPException(
@@ -36,7 +36,6 @@ def register_user(payload: UserCreate, db: Session = Depends(get_db)):
             detail="Email already registered",
         )
 
-    # If UserCreate.password is SecretStr in your schema, unwrap it:
     password_plain = (
         payload.password.get_secret_value()
         if hasattr(payload.password, "get_secret_value")
@@ -53,6 +52,18 @@ def register_user(payload: UserCreate, db: Session = Depends(get_db)):
     db.add(user)
     db.commit()
     db.refresh(user)
+
+    default_template = ReceiptTemplate(
+        user_id=user.id,
+        logo=None,
+        gst_hst_number="000000000",  
+        business_name=user.company_name or "Your Business",
+        contact_phone=None,
+        contact_email=user.email,
+        website_url=None,
+    )
+    db.add(default_template)
+    db.commit()
 
     return {"message": "User created successfully"}
 

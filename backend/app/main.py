@@ -2,9 +2,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 
-from app.api.v1.endpoints import receipts, auth
+from app.api.v1.endpoints import receip_template ,receipts, auth
 from app.core.config import settings
-from app.middlewear.auth_mw import AutoRefreshMiddleware
+# from app.middlewear.auth_mw import AutoRefreshMiddleware
 
 app = FastAPI(
     title="QR Receipt Generator",
@@ -30,8 +30,6 @@ def custom_openapi():
         "scheme": "bearer",
         "bearerFormat": "JWT",
     }
-
-    # Apply this security to ALL operations (or add per-route if you prefer)
     for path in schema.get("paths", {}).values():
         for op in path.values():
             op.setdefault("security", [{"BearerAuth": []}])
@@ -58,5 +56,6 @@ app.add_middleware(
 
 app.include_router(auth.router, prefix="/api/v1", tags=["auth"])
 app.include_router(receipts.router, prefix="/api/v1", tags=["receipts"])
+app.include_router(receip_template.router, prefix="/api/v1", tags=["receip_template"])
 # app.include_router(templates.router, prefix="/api/v1/templates", tags=["templates"])
 # uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload

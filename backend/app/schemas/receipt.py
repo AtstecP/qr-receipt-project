@@ -1,6 +1,3 @@
-# app/schemas/common.py (optional place for shared imports/types)
-from __future__ import annotations
-
 from datetime import datetime, timezone
 from decimal import Decimal
 from pydantic import BaseModel, ConfigDict, Field, EmailStr, SecretStr

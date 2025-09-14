@@ -1,6 +1,4 @@
-# app/routers/receipts.py
 from __future__ import annotations
-
 from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Any
@@ -48,6 +46,7 @@ def get_pdf(receipt_id: UUID, db: Session = Depends(get_db)):
     """
     path = generate_receipt_pdf(db, str(receipt_id))
     return FileResponse(path, media_type="application/pdf", filename=f"{receipt_id}.pdf")
+
 
 
 @router.post("/", response_model=ReceiptResponse, status_code=status.HTTP_201_CREATED)

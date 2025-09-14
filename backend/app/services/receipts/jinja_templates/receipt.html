@@ -1,121 +1,141 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Receipt {{ receipt_id }}</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #ffffff;
-        }
-        .receipt-container {
-            background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-            padding: 30px;
-            position: relative;
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 25px;
-            border-bottom: 2px dashed #eee;
-            padding-bottom: 20px;
-        }
-        .header h1 {
-            color: #2c3e50;
-            margin: 0;
-            font-size: 24px;
-        }
-        .receipt-id {
-            font-size: 14px;
-            color: #7f8c8d;
-            margin-top: 5px;
-        }
-        .details {
-            margin-bottom: 25px;
-        }
-        .detail-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-        }
-        .detail-label {
-            font-weight: 600;
-            color: #7f8c8d;
-        }
-        .total {
-            font-size: 20px;
-            font-weight: bold;
-            color: #2c3e50;
-            border-top: 2px solid #eee;
-            padding-top: 15px;
-            margin-top: 15px;
-            text-align: right;
-        }
-        .qr-code {
-            text-align: center;
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 2px dashed #eee;
-        }
-        .footer {
-            text-align: center;
-            margin-top: 30px;
-            font-size: 12px;
-            color: #95a5a6;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <title>Receipt {{ receipt_id }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --ink:#2c3e50;
+      --muted:#7f8c8d;
+      --rule:#eee;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.55;
+      color: #333;
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #fff;
+    }
+    .receipt {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,.08);
+      padding: 28px;
+    }
+    .header { text-align: center; padding-bottom: 18px; border-bottom: 2px dashed var(--rule); margin-bottom: 20px; }
+    .brand { display: flex; align-items: center; gap: 12px; justify-content: center; }
+    .brand img { max-height: 64px; max-width: 180px; object-fit: contain; }
+    .brand h1 { margin: 0; font-size: 22px; color: var(--ink); }
+    .meta { margin-top: 6px; color: var(--muted); font-size: 13px; }
+    .rid { font-size: 13px; color: var(--muted); margin-top: 6px; }
+
+    .section { margin: 18px 0; }
+    .row { display: flex; justify-content: space-between; gap: 16px; margin: 6px 0; }
+    .label { color: var(--muted); font-weight: 600; }
+    .value { text-align: right; }
+
+    table.items { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    table.items th, table.items td { padding: 8px 6px; text-align: left; border-bottom: 1px solid var(--rule); }
+    table.items th { color: var(--muted); font-weight: 600; font-size: 13px; }
+
+    .totals { margin-top: 12px; border-top: 2px solid var(--rule); padding-top: 12px; }
+    .total-line { display:flex; justify-content: space-between; margin: 4px 0; }
+    .grand { font-size: 18px; font-weight: 700; color: var(--ink); }
+
+    .qr { text-align: center; border-top: 2px dashed var(--rule); margin-top: 22px; padding-top: 18px; }
+    .qr img { height: 140px; }
+
+    .footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 18px; }
+  </style>
 </head>
 <body>
-    <div class="receipt-container">
-        <div class="header">
-            <h1>Transaction Receipt</h1>
-            <div class="receipt-id">ID: {{ receipt_id }}</div>
-        </div>
+  <div class="receipt">
 
-        <div class="details">
-            <div class="detail-row">
-                <span class="detail-label">Company:</span>
-                <span>{{ company_name }}</span>
-            </div>
-            <div class="detail-row">
-                <span class="detail-label">Issued To:</span>
-                <span>{{ None if user else "Guest" }}</span>
-            </div>
-            <div class="detail-row">
-                <span class="detail-label">Date:</span>
-                <span>{{ transaction_date.strftime('%B %d, %Y at %H:%M') }}</span>
-            </div>
-        </div>
-
-        <!-- Items would go here if you had them -->
-        <!-- <div class="items">
-            {% for item in items %}
-            <div class="item-row">
-                ...
-            </div>
-            {% endfor %}
-        </div> -->
-
-        <div class="total">
-            Total: ${{ "%.2f"|format(total) }}
-        </div>
-
-        <!-- <div class="qr-code">
-            <img src="{{ qr_code_url }}" alt="Receipt QR Code" width="150">
-            <p>Scan to verify this receipt</p>
-        </div> -->
-
-        <div class="footer">
-            Thank you for your business!<br>
-
-        </div>
+    <!-- Header -->
+    <div class="header">
+      <div class="brand">
+        {% if logo %}<img src="{{ logo }}" alt="Logo">{% endif %}
+        <h1>{{ business_name or "Your Business" }}</h1>
+      </div>
+      <div class="meta">
+        {% if gst_hst_number %}GST/HST: {{ gst_hst_number }}{% endif %}
+        {% if contact_phone %} · {{ contact_phone }}{% endif %}
+        {% if contact_email %} · {{ contact_email }}{% endif %}
+        {% if website_url %} · {{ website_url }}{% endif %}
+      </div>
+      <div class="rid">Receipt ID: {{ receipt_id }}</div>
     </div>
+
+    <!-- Details -->
+    <div class="section">
+      <div class="row">
+        <div class="label">Date:</div>
+        <div class="value">
+          {{ transaction_date.strftime('%B %d, %Y at %H:%M') if transaction_date else "" }}
+        </div>
+      </div>
+      {% if customer_name or customer_email %}
+      <div class="row">
+        <div class="label">Issued To:</div>
+        <div class="value">
+          {{ customer_name or customer_email or "Guest" }}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Items (optional) -->
+    {% if items %}
+      <table class="items">
+        <thead>
+          <tr><th>Item</th><th>Qty</th><th>Price</th></tr>
+        </thead>
+        <tbody>
+          {% for it in items %}
+          <tr>
+            <td>{{ it.name }}</td>
+            <td>{{ it.qty }}</td>
+            <td>
+              {% if it.unit_price is defined %}
+                ${{ "%.2f"|format(it.unit_price) }}
+              {% else %}
+                —
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+
+    <!-- Totals -->
+    <div class="totals">
+      {% if subtotal is defined %}
+        <div class="total-line"><span>Subtotal</span><span>${{ "%.2f"|format(subtotal) }}</span></div>
+      {% endif %}
+      {% if tax is defined %}
+        <div class="total-line"><span>Tax</span><span>${{ "%.2f"|format(tax) }}</span></div>
+      {% endif %}
+      <div class="total-line grand">
+        <span>Total</span><span>${{ "%.2f"|format(total) }}</span>
+      </div>
+    </div>
+
+    <!-- QR (optional) -->
+    {% if qr_code_url %}
+    <div class="qr">
+      <img src="{{ qr_code_url }}" alt="Receipt QR Code">
+      <p>Scan to view or verify this receipt</p>
+    </div>
+    {% endif %}
+
+    <div class="footer">
+      Thank you for your business!
+    </div>
+  </div>
 </body>
 </html>
