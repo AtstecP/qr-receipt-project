@@ -1,16 +1,24 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
+from fastapi.staticfiles import StaticFiles
 
 from app.api.v1.endpoints import receip_template ,receipts, auth
 from app.core.config import settings
 # from app.middlewear.auth_mw import AutoRefreshMiddleware
+
+
+
 
 app = FastAPI(
     title="QR Receipt Generator",
     version="1.0.0", 
     swagger_ui_parameters={"persistAuthorization": True},)
 
+os.makedirs("app/static/logo", exist_ok=True)
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 def custom_openapi():
     if app.openapi_schema:

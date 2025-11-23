@@ -125,7 +125,7 @@ def generate_template_pdf(db: Session, email: str) -> str:
         "total": 42.00,  # sample total
 
         # Header fields from the user's template:
-        "company_name": tpl.business_name,
+        "business_name": tpl.business_name,
         "logo": tpl.logo,
         "gst_hst_number": tpl.gst_hst_number,
         "contact_phone": tpl.contact_phone,
